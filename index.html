@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Home">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Home Dashboard</title>
+<style>
+/* Written for Safari 12 (iPad mini 2): no flex `gap`, no `inset`, no optional chaining. */
+:root {
+  --text: #ffffff;
+  --text-2: rgba(255,255,255,0.72);
+  --text-3: rgba(255,255,255,0.5);
+  --card: rgba(0,0,0,0.20);
+  --line: rgba(255,255,255,0.16);
+  --night-text: #4a4a4a;
+  --night-text-2: #2e2e2e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 2vmin; height: 100%; background: #0b1026; }
+body {
+  height: 100%; overflow: hidden; color: var(--text);
+  font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
+  background: #0b1026;
+}
+#bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; transition: opacity 3s; }
+#bg div { position: absolute; top: 0; left: 0; right: 0; bottom: 0; transition: opacity 3s; }
+#app {
+  position: relative; z-index: 1; height: 100%;
+  display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column;
+  padding: 3rem 3.4rem 2rem;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.18);
+}
+.top { display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; -webkit-align-items: flex-start; align-items: flex-start; }
+.clock { line-height: 1; }
+#time { font-size: 13rem; font-weight: 200; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+#ampm { font-size: 3rem; font-weight: 400; letter-spacing: 0; margin-left: 0.6rem; color: var(--text-2); }
+#date { font-size: 2.6rem; font-weight: 500; margin-top: 1rem; color: var(--text); }
+.now { text-align: right; padding-top: 1rem; }
+.now-row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: flex-end; justify-content: flex-end; }
+#nowIcon { width: 8rem; height: 8rem; margin-right: 1rem; }
+#nowIcon svg { width: 100%; height: 100%; }
+#nowTemp { font-size: 8rem; font-weight: 200; line-height: 1; letter-spacing: -0.03em; }
+#nowDesc { font-size: 2.2rem; font-weight: 500; margin-top: 0.4rem; }
+#nowMeta { font-size: 1.7rem; color: var(--text-2); margin-top: 0.5rem; }
+.spacer { -webkit-flex: 1; flex: 1; min-height: 1rem; }
+.cards { display: -webkit-flex; display: flex; }
+.card { background: var(--card); border-radius: 1.6rem; padding: 1.4rem 1.8rem; }
+.card h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); margin-bottom: 0.6rem; text-shadow: none; }
+#hourlyCard { -webkit-flex: 1.1; flex: 1.1; margin-right: 1.4rem; }
+#dailyCard { -webkit-flex: 1; flex: 1; }
+#hourly { display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; }
+.hr { text-align: center; -webkit-flex: 1; flex: 1; padding-top: 0.6rem; }
+.hr .t { font-size: 1.55rem; font-weight: 600; }
+.hr .i { width: 3.6rem; height: 3.6rem; margin: 0.9rem auto 0; }
+.hr .i svg { width: 100%; height: 100%; }
+.hr .p { font-size: 1.2rem; font-weight: 600; color: #8fd8ff; height: 1.6rem; line-height: 1.6rem; }
+.hr .v { font-size: 1.9rem; font-weight: 500; margin-top: 0.3rem; }
+.day { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; height: 3.1rem; border-bottom: 1px solid var(--line); }
+.day:last-child { border-bottom: 0; }
+.day .n { width: 5.6rem; font-size: 1.65rem; font-weight: 600; }
+.day .i { width: 2.6rem; height: 2.6rem; }
+.day .i svg { width: 100%; height: 100%; }
+.day .p { width: 3rem; font-size: 1.15rem; font-weight: 600; color: #8fd8ff; padding-left: 0.4rem; }
+.day .lo { width: 3.2rem; text-align: right; font-size: 1.65rem; color: var(--text-2); }
+.day .hi { width: 3.2rem; text-align: right; font-size: 1.65rem; font-weight: 600; }
+.bar { -webkit-flex: 1; flex: 1; height: 0.5rem; border-radius: 0.25rem; background: rgba(255,255,255,0.18); margin: 0 0.7rem 0 0.7rem; position: relative; overflow: hidden; }
+.bar span { position: absolute; top: 0; bottom: 0; border-radius: 0.25rem; background: -webkit-linear-gradient(left, #7fd3ff, #ffd36b, #ff9a4d); background: linear-gradient(to right, #7fd3ff, #ffd36b, #ff9a4d); }
+#status { font-size: 1.2rem; color: var(--text-3); margin-top: 1.2rem; display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; text-shadow: none; }
+#status .dot { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: #4cd964; margin-right: 0.5rem; vertical-align: middle; position: relative; top: -0.1rem; }
+#status .dot.stale { background: #ff9500; }
+.empty { color: var(--text-3); font-size: 1.5rem; padding: 2rem 0; text-align: center; }
+
+/* Portrait: stack the cards */
+@media (orientation: portrait) {
+  html { font-size: 2.15vmin; }
+  .cards { -webkit-flex-direction: column; flex-direction: column; }
+  #hourlyCard { margin-right: 0; margin-bottom: 1.4rem; }
+  .day { height: 3.4rem; }
+  #time { font-size: 9rem; }
+  #ampm { font-size: 2.4rem; }
+  #date { font-size: 2.1rem; }
+  .now { padding-top: 0.4rem; }
+  #nowIcon { width: 5.5rem; height: 5.5rem; margin-right: 0.6rem; }
+  #nowTemp { font-size: 6rem; }
+  #nowDesc { font-size: 1.9rem; }
+  #nowMeta { font-size: 1.25rem; white-space: nowrap; }
+  #statusRight { display: none; }
+  .spacer { min-height: 2.4rem; }
+  #app { padding: 2.4rem 2.6rem 1.6rem; }
+  #status { font-size: 1.05rem; }
+}
+
+/* Night mode */
+#night {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; background: #000;
+  display: none; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;
+  text-align: center;
+}
+body.is-night #night { display: -webkit-flex; display: flex; }
+#nightInner { -webkit-transition: -webkit-transform 2s; transition: transform 2s; }
+#nTime { font-size: 24vmin; font-weight: 100; color: var(--night-text); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+#nTime small { font-size: 0.3em; font-weight: 300; margin-left: 0.3em; }
+#nSub { font-size: 3.4vmin; color: var(--night-text-2); margin-top: 2.5vmin; font-weight: 400; }
+</style>
+</head>
+<body>
+<div id="bg"><div id="bgA"></div><div id="bgB" style="opacity:0"></div></div>
+
+<div id="app">
+  <div class="top">
+    <div class="clock">
+      <div><span id="time">--:--</span><span id="ampm"></span></div>
+      <div id="date">&nbsp;</div>
+    </div>
+    <div class="now">
+      <div class="now-row"><div id="nowIcon"></div><div id="nowTemp">--°</div></div>
+      <div id="nowDesc">Loading weather…</div>
+      <div id="nowMeta">&nbsp;</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="cards">
+    <div class="card" id="hourlyCard"><h3>Hourly</h3><div id="hourly"><div class="empty">—</div></div></div>
+    <div class="card" id="dailyCard"><h3 id="dailyTitle">5-Day Forecast</h3><div id="daily"><div class="empty">—</div></div></div>
+  </div>
+  <div id="status"><span id="statusLeft"></span><span id="statusRight">Tap here to refresh</span></div>
+</div>
+
+<div id="night"><div id="nightInner"><div id="nTime">--:--</div><div id="nSub"></div></div></div>
+
+<script>
+/* ================== SETTINGS — edit these ================== */
+var CONFIG = {
+  locationName: 'Christchurch',
+  latitude: -43.5321,
+  longitude: 172.6362,
+  timezone: 'Pacific/Auckland',
+  use24Hour: false,          // true = 19:42, false = 7:42 pm
+  hourlyCount: 7,            // hours shown in the hourly strip
+  dailyCount: 5,             // days shown in the forecast list
+  weatherRefreshMinutes: 15, // how often to fetch weather
+  fullReloadHours: 6,        // reload the page now and then (keeps old Safari healthy + picks up your updates)
+  night: {
+    enabled: true,
+    start: '22:00',          // 24-hour time night mode begins
+    end: '06:30',            // 24-hour time night mode ends
+    wakeSeconds: 30          // tap during night mode to show the full dashboard for this long
+  }
+};
+/* =========================================================== */
+
+(function () {
+  'use strict';
+
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var params = parseParams();
+  var weather = null;
+  var lastOk = 0;
+  var nightWakeUntil = 0;
+  var bgKey = '';
+  var bgFront = 'A';
+
+  function $(id) { return document.getElementById(id); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function parseParams() {
+    var out = {}, q = location.search.replace(/^\?/, '').split('&');
+    for (var i = 0; i < q.length; i++) { var kv = q[i].split('='); if (kv[0]) out[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
+    return out;
+  }
+  function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function load(k) { try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+
+  // Open-Meteo gives local times like "2026-11-08T14:00". Safari 12 would read those as UTC, so parse by hand.
+  function parseLocal(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s);
+    if (!m) return new Date(NaN);
+    return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0));
+  }
+  function fmtTime(d, short) {
+    var h = d.getHours(), m = d.getMinutes();
+    if (CONFIG.use24Hour) return { t: pad(h) + (short ? '' : ':' + pad(m)), ap: '' };
+    var ap = h < 12 ? 'am' : 'pm';
+    h = h % 12; if (h === 0) h = 12;
+    return { t: h + (short ? '' : ':' + pad(m)), ap: ap };
+  }
+  function minutesOf(hhmm) { var p = hhmm.split(':'); return (+p[0]) * 60 + (+p[1] || 0); }
+
+  /* ---------- icons ---------- */
+  var SUN = '#FFC531', CLOUD = '#F2F5F9', CLOUD_DARK = '#C5CEDA', RAIN = '#6CC6FF', MOON = '#F4E6B8';
+  function sunSvg(cx, cy, r) {
+    var rays = '';
+    for (var i = 0; i < 8; i++) {
+      var a = i * Math.PI / 4, x1 = cx + Math.cos(a) * (r + 4), y1 = cy + Math.sin(a) * (r + 4), x2 = cx + Math.cos(a) * (r + 9), y2 = cy + Math.sin(a) * (r + 9);
+      rays += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + SUN + '" stroke-width="3.2" stroke-linecap="round"/>';
+    }
+    return rays + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + SUN + '"/>';
+  }
+  function moonSvg(cx, cy, r) {
+    // crescent: big circle minus offset circle
+    return '<path fill="' + MOON + '" d="M' + (cx + r * 0.2) + ' ' + (cy - r) + 'A' + r + ' ' + r + ' 0 1 0 ' + (cx + r) + ' ' + (cy + r * 0.35) +
+      'A' + (r * 0.8) + ' ' + (r * 0.8) + ' 0 1 1 ' + (cx + r * 0.2) + ' ' + (cy - r) + 'Z"/>';
+  }
+  function cloudSvg(dx, dy, s, fill) {
+    return '<path transform="translate(' + dx + ' ' + dy + ') scale(' + s + ')" fill="' + fill + '" d="M47 48H18A11 11 0 0 1 16.6 26.1 15 15 0 0 1 44.6 22.4 13 13 0 0 1 47 48Z"/>';
+  }
+  function iconFor(code, isDay) {
+    var c = code, svg = '';
+    var celestial = isDay ? sunSvg(22, 22, 10) : moonSvg(22, 22, 12);
+    if (c === 0) svg = isDay ? sunSvg(32, 32, 13) : moonSvg(30, 30, 18);
+    else if (c === 1 || c === 2) svg = celestial + cloudSvg(c === 1 ? 14 : 6, c === 1 ? 16 : 10, c === 1 ? 0.8 : 0.95, CLOUD);
+    else if (c === 3) svg = cloudSvg(-2, -4, 0.75, CLOUD_DARK) + cloudSvg(4, 6, 0.95, CLOUD);
+    else if (c === 45 || c === 48) svg = cloudSvg(4, -4, 0.9, CLOUD_DARK) + fogLines();
+    else if (c >= 51 && c <= 57) svg = cloudSvg(2, -6, 1, CLOUD) + drops(2, 4);
+    else if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) svg = (c >= 80 ? celestialSmall(isDay) : '') + cloudSvg(2, -6, 1, CLOUD) + drops(3, 8);
+    else if ((c >= 71 && c <= 77) || c === 85 || c === 86) svg = cloudSvg(2, -6, 1, CLOUD) + flakes();
+    else if (c >= 95) svg = cloudSvg(2, -6, 1, CLOUD_DARK) + '<path fill="' + SUN + '" d="M33 40 25 53h7l-3 10 11-15h-7l4-8Z"/>';
+    else svg = cloudSvg(2, 2, 1, CLOUD);
+    return '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">' + svg + '</svg>';
+  }
+  function celestialSmall(isDay) { return isDay ? sunSvg(46, 16, 7) : moonSvg(46, 14, 9); }
+  function drops(n, len) {
+    var out = '', xs = n === 2 ? [26, 38] : [22, 33, 44];
+    for (var i = 0; i < xs.length; i++) out += '<line x1="' + xs[i] + '" y1="48" x2="' + (xs[i] - 3) + '" y2="' + (48 + len) + '" stroke="' + RAIN + '" stroke-width="3.2" stroke-linecap="round"/>';
+    return out;
+  }
+  function flakes() { return '<g fill="#FFFFFF"><circle cx="22" cy="51" r="2.8"/><circle cx="33" cy="56" r="2.8"/><circle cx="44" cy="51" r="2.8"/></g>'; }
+  function fogLines() { return '<g stroke="' + CLOUD + '" stroke-width="3.2" stroke-linecap="round"><line x1="12" y1="48" x2="52" y2="48"/><line x1="18" y1="56" x2="46" y2="56"/></g>'; }
+
+  function describe(c) {
+    if (c === 0) return 'Clear';
+    if (c === 1) return 'Mostly Clear';
+    if (c === 2) return 'Partly Cloudy';
+    if (c === 3) return 'Cloudy';
+    if (c === 45 || c === 48) return 'Fog';
+    if (c >= 51 && c <= 55) return 'Drizzle';
+    if (c === 56 || c === 57) return 'Freezing Drizzle';
+    if (c === 61) return 'Light Rain';
+    if (c === 63) return 'Rain';
+    if (c === 65) return 'Heavy Rain';
+    if (c === 66 || c === 67) return 'Freezing Rain';
+    if (c >= 71 && c <= 75) return 'Snow';
+    if (c === 77) return 'Snow Grains';
+    if (c >= 80 && c <= 82) return 'Showers';
+    if (c === 85 || c === 86) return 'Snow Showers';
+    if (c >= 95) return 'Thunderstorms';
+    return '—';
+  }
+  function compass(deg) { return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(deg / 45) % 8]; }
+
+  /* ---------- background ---------- */
+  var GRADIENTS = {
+    clearDay: ['#2E7BE6', '#5FC3F2'],
+    cloudyDay: ['#56677D', '#8D9DB2'],
+    wetDay: ['#3B4A5C', '#61748A'],
+    dawnDusk: ['#3B3F7A', '#E58B5A'],
+    clearNight: ['#070B1F', '#26346A'],
+    cloudyNight: ['#14171F', '#3A4252']
+  };
+  function pickBg(now) {
+    var code = weather && weather.current ? weather.current.weather_code : 1;
+    var isDay = weather && weather.current ? weather.current.is_day === 1 : (now.getHours() >= 7 && now.getHours() < 20);
+    if (weather && weather.daily && weather.daily.sunrise) {
+      var sr = parseLocal(weather.daily.sunrise[0]).getTime(), ss = parseLocal(weather.daily.sunset[0]).getTime(), t = now.getTime(), w = 45 * 60000;
+      if (Math.abs(t - sr) < w || Math.abs(t - ss) < w) return 'dawnDusk';
+    }
+    var wet = code >= 51, cloudy = code >= 3;
+    if (isDay) return wet ? 'wetDay' : cloudy ? 'cloudyDay' : 'clearDay';
+    return cloudy ? 'cloudyNight' : 'clearNight';
+  }
+  function setBg(key) {
+    if (key === bgKey) return;
+    bgKey = key;
+    var g = GRADIENTS[key], css = 'linear-gradient(160deg, ' + g[0] + ' 0%, ' + g[1] + ' 100%)';
+    var next = bgFront === 'A' ? $('bgB') : $('bgA'), cur = bgFront === 'A' ? $('bgA') : $('bgB');
+    next.style.background = css;
+    next.style.opacity = '1'; cur.style.opacity = '0';
+    bgFront = bgFront === 'A' ? 'B' : 'A';
+    document.documentElement.style.background = g[0];
+  }
+
+  /* ---------- clock + night ---------- */
+  function isNightTime(now) {
+    if (params.mode === 'night') return true;
+    if (params.mode === 'day') return false;
+    if (!CONFIG.night.enabled) return false;
+    var m = now.getHours() * 60 + now.getMinutes(), s = minutesOf(CONFIG.night.start), e = minutesOf(CONFIG.night.end);
+    return s > e ? (m >= s || m < e) : (m >= s && m < e);
+  }
+  var lastShiftMin = -1;
+  function tickClock() {
+    var now = new Date(), f = fmtTime(now);
+    $('time').textContent = f.t;
+    $('ampm').textContent = f.ap;
+    $('date').textContent = DAYS[now.getDay()] + ' ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+
+    var night = isNightTime(now) && Date.now() > nightWakeUntil;
+    document.body.className = night ? 'is-night' : '';
+    if (night) {
+      $('nTime').innerHTML = f.t + (f.ap ? '<small>' + f.ap + '</small>' : '');
+      var sub = DAYS[now.getDay()].slice(0, 3) + ' ' + now.getDate() + ' ' + MONTHS[now.getMonth()].slice(0, 3);
+      if (weather && weather.current) sub += '  ·  ' + Math.round(weather.current.temperature_2m) + '°';
+      $('nSub').textContent = sub;
+      if (now.getMinutes() !== lastShiftMin) { // drift slightly each minute so nothing sits still all night
+        lastShiftMin = now.getMinutes();
+        var x = Math.round((Math.random() - 0.5) * 6), y = Math.round((Math.random() - 0.5) * 6);
+        $('nightInner').style.webkitTransform = $('nightInner').style.transform = 'translate(' + x + 'vmin,' + y + 'vmin)';
+      }
+    }
+    if (now.getSeconds() === 0 || !bgKey) setBg(pickBg(now));
+    if (weather && now.getSeconds() === 0 && now.getMinutes() === 0) renderWeather(); // roll hourly strip forward
+    setTimeout(tickClock, 1000 - (Date.now() % 1000) + 20);
+  }
+
+  /* ---------- weather ---------- */
+  function apiUrl() {
+    return 'https://api.open-meteo.com/v1/forecast?latitude=' + CONFIG.latitude + '&longitude=' + CONFIG.longitude +
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m' +
+      '&hourly=temperature_2m,weather_code,precipitation_probability,is_day' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max' +
+      '&timezone=' + encodeURIComponent(CONFIG.timezone) + '&forecast_days=' + Math.max(CONFIG.dailyCount + 1, 3) + '&wind_speed_unit=kmh';
+  }
+  function getJson(url) {
+    var req = fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    var timeout = new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, 20000); });
+    return Promise.race([req, timeout]);
+  }
+  function fetchWeather() {
+    if (params.demo) { weather = demoData(); lastOk = Date.now(); renderWeather(); return; }
+    getJson(apiUrl()).then(function (data) {
+      if (!data || !data.current || !data.hourly || !data.daily) throw new Error('bad data');
+      weather = data; lastOk = Date.now();
+      store('dash.weather', { at: lastOk, data: data });
+      renderWeather();
+    }).catch(function () { renderStatus(); });
+  }
+  function renderWeather() {
+    if (!weather) return;
+    var c = weather.current, d = weather.daily, h = weather.hourly, now = new Date();
+    $('nowIcon').innerHTML = iconFor(c.weather_code, c.is_day === 1);
+    $('nowTemp').textContent = Math.round(c.temperature_2m) + '°';
+    $('nowDesc').textContent = describe(c.weather_code);
+    var meta = 'H:' + Math.round(d.temperature_2m_max[0]) + '°  L:' + Math.round(d.temperature_2m_min[0]) + '°';
+    meta += '   ·   Feels ' + Math.round(c.apparent_temperature) + '°';
+    meta += '   ·   ' + compass(c.wind_direction_10m) + ' ' + Math.round(c.wind_speed_10m) + ' km/h';
+    $('nowMeta').textContent = meta;
+
+    // hourly: from the current hour onward
+    var start = 0, curHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()).getTime();
+    for (var i = 0; i < h.time.length; i++) { if (parseLocal(h.time[i]).getTime() >= curHour) { start = i; break; } }
+    var html = '';
+    for (var j = start; j < Math.min(start + CONFIG.hourlyCount, h.time.length); j++) {
+      var t = parseLocal(h.time[j]), f = fmtTime(t, true), p = h.precipitation_probability ? h.precipitation_probability[j] : null;
+      html += '<div class="hr"><div class="t">' + (j === start ? 'Now' : f.t + '<small style="font-size:.7em;font-weight:500">' + f.ap + '</small>') + '</div>' +
+        '<div class="i">' + iconFor(h.weather_code[j], h.is_day[j] === 1) + '</div>' +
+        '<div class="p">' + (p != null && p >= 20 ? p + '%' : '') + '</div>' +
+        '<div class="v">' + Math.round(h.temperature_2m[j]) + '°</div></div>';
+    }
+    $('hourly').innerHTML = html || '<div class="empty">—</div>';
+
+    // daily with Apple-style range bars
+    var n = Math.min(CONFIG.dailyCount, d.time.length), lo = 99, hi = -99, k;
+    for (k = 0; k < n; k++) { lo = Math.min(lo, d.temperature_2m_min[k]); hi = Math.max(hi, d.temperature_2m_max[k]); }
+    var span = Math.max(hi - lo, 1), dh = '';
+    for (k = 0; k < n; k++) {
+      var day = parseLocal(d.time[k]), mn = d.temperature_2m_min[k], mx = d.temperature_2m_max[k], pp = d.precipitation_probability_max ? d.precipitation_probability_max[k] : null;
+      var left = ((mn - lo) / span * 100).toFixed(1), width = Math.max((mx - mn) / span * 100, 4).toFixed(1);
+      dh += '<div class="day"><div class="n">' + (k === 0 ? 'Today' : DAYS[day.getDay()].slice(0, 3)) + '</div>' +
+        '<div class="i">' + iconFor(d.weather_code[k], true) + '</div>' +
+        '<div class="p">' + (pp != null && pp >= 20 ? pp + '%' : '') + '</div>' +
+        '<div class="lo">' + Math.round(mn) + '°</div>' +
+        '<div class="bar"><span style="left:' + left + '%;width:' + width + '%"></span></div>' +
+        '<div class="hi">' + Math.round(mx) + '°</div></div>';
+    }
+    $('daily').innerHTML = dh;
+    $('dailyTitle').textContent = n + '-Day Forecast';
+    setBg(pickBg(now));
+    renderStatus();
+  }
+  function renderStatus() {
+    var left = CONFIG.locationName;
+    if (lastOk) {
+      var stale = Date.now() - lastOk > CONFIG.weatherRefreshMinutes * 3 * 60000, f = fmtTime(new Date(lastOk));
+      left = '<span class="dot' + (stale ? ' stale' : '') + '"></span>' + CONFIG.locationName + '  ·  Updated ' + f.t + (f.ap ? ' ' + f.ap : '') + (stale ? '  ·  offline?' : '');
+    } else {
+      left = '<span class="dot stale"></span>' + CONFIG.locationName + '  ·  Waiting for weather…';
+    }
+    if (weather && weather.daily && weather.daily.sunrise) {
+      var sr = fmtTime(parseLocal(weather.daily.sunrise[0])), ss = fmtTime(parseLocal(weather.daily.sunset[0]));
+      left += '  ·  Sunrise ' + sr.t + sr.ap + '  ·  Sunset ' + ss.t + ss.ap;
+    }
+    $('statusLeft').innerHTML = left;
+  }
+
+  function demoData() {
+    var now = new Date(), base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    function iso(dt, withTime) { return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + (withTime ? 'T' + pad(dt.getHours()) + ':00' : ''); }
+    var h = { time: [], temperature_2m: [], weather_code: [], precipitation_probability: [], is_day: [] }, codes = [1, 2, 2, 3, 61, 80, 2, 1, 0, 0];
+    for (var i = 0; i < 72; i++) {
+      var t = new Date(base.getTime() + i * 3600000), hr = t.getHours();
+      h.time.push(iso(t, true)); h.temperature_2m.push(12 + 7 * Math.sin((hr - 9) / 24 * 2 * Math.PI));
+      h.weather_code.push(codes[Math.floor(i / 3) % codes.length]); h.precipitation_probability.push([0, 10, 30, 60, 20][i % 5]); h.is_day.push(hr >= 6 && hr < 21 ? 1 : 0);
+    }
+    var d = { time: [], weather_code: [2, 61, 3, 0, 80, 1], temperature_2m_max: [19, 15, 17, 22, 16, 18], temperature_2m_min: [9, 8, 7, 10, 6, 8], precipitation_probability_max: [10, 70, 20, 0, 40, 5], sunrise: [], sunset: [], uv_index_max: [6, 3, 5, 8, 4, 6] };
+    for (var k = 0; k < 6; k++) { var dd = new Date(base.getTime() + k * 86400000); d.time.push(iso(dd)); d.sunrise.push(iso(dd) + 'T05:58'); d.sunset.push(iso(dd) + 'T20:41'); }
+    return { current: { temperature_2m: 17.4, apparent_temperature: 16.1, relative_humidity_2m: 62, weather_code: 2, is_day: 1, wind_speed_10m: 14, wind_direction_10m: 70 }, hourly: h, daily: d };
+  }
+
+  /* ---------- interactions ---------- */
+  $('night').addEventListener('click', function () { nightWakeUntil = Date.now() + CONFIG.night.wakeSeconds * 1000; tickClockOnce(); });
+  $('status').addEventListener('click', function () { $('statusRight').textContent = 'Refreshing…'; fetchWeather(); setTimeout(function () { $('statusRight').textContent = 'Tap here to refresh'; }, 3000); });
+  function tickClockOnce() { var n = new Date(); document.body.className = (isNightTime(n) && Date.now() > nightWakeUntil) ? 'is-night' : ''; }
+
+  // Show cached weather straight away (e.g. after a reload or while Wi-Fi is down)
+  var cached = load('dash.weather');
+  if (cached && cached.data && !params.demo && Date.now() - cached.at < 12 * 3600000) { weather = cached.data; lastOk = cached.at; renderWeather(); }
+
+  tickClock();
+  fetchWeather();
+  setInterval(fetchWeather, CONFIG.weatherRefreshMinutes * 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) fetchWeather(); });
+  setTimeout(function () { location.reload(); }, CONFIG.fullReloadHours * 3600000);
+})();
+</script>
+</body>
+</html>
